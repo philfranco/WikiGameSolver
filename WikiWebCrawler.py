@@ -4,6 +4,7 @@ from nltk.tokenize import word_tokenize
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
+from similarityCheck import coding_test
 
 def main():
     # Identify Starting Page
@@ -78,7 +79,6 @@ def getText(start_article, end_article):
     print('Number of words: ', len(text))
 
     return text
-
 
 def getLinks(start_article):
     url = 'https://en.wikipedia.org/w/api.php'

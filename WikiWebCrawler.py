@@ -47,13 +47,19 @@ def recursiveSearch(N, page_links, data):
     else:
         return recursiveSearch(N - 1, new_links, new_data)
 
-def createWikiGraph(source, target):
+def createWikiGraph(source, target):    
     len_target = len(target)
     scores = wordScore(source, target)
     wikiData = {'source': [source for i in range(len_target)],
                 'target': target,
                 'weight': scores}
-    return wikiData
+
+    df_wiki = pd.DataFrame(list(zip( [source for i in range(len_target)], target, scores)),
+               columns =['source', 'source', 'weight'])
+    
+    df_wiki_org = df_wiki.sort_values(by=['weight'], ascending=False)
+
+    return wikiData 
 
 def getText(start_article, end_article):
     url = 'https://en.wikipedia.org/w/api.php'

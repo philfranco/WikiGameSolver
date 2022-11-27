@@ -34,10 +34,10 @@ def wordScore(word1, word2):
 
     embeddings1 = model.encode(word1_arr)
     embeddings2 = model.encode(word2)
-    
+
     # compute cosine_scores
     cosine_matrix = util.cos_sim(embeddings1, embeddings2)
     cosine_scores = cosine_matrix.diagonal()
-    
-    # eval is used to convert the tensor array
-    return cosine_scores
+
+    # convert the tensor array to a list and return
+    return cosine_scores.tolist()

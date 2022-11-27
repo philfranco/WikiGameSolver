@@ -9,13 +9,16 @@ from similarityCheck import wordScore
 def main():
     # Identify Starting Page
     print('Starting')
-    start_article = "Wilhelmy plate"
-    end_article = "America's Cup"
+    start_article = 'Deer' # "Wilhelmy plate"
+    end_article = 'Field hockey' # "America's Cup"
 
     current_article = start_article
 
     # page_text = getText(current_article, end_article)
     # page_links = getLinks(current_article)
+    
+    steps = playWikiGame(start_article, end_article)
+    print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
 
     data = recursiveSearch(1, [start_article], {})
 
@@ -27,6 +30,33 @@ def main():
     nx.draw_networkx(G)
 
     plt.show()
+
+def playWikiGame(head, final):
+    steps = 0
+    pages = [head]
+
+    while not head == final:
+        result_links = getLinks(head)
+        len_target = len(final)
+        scores = wordScore(final, result_links)
+        
+        df_wiki = pd.DataFrame(list(zip(result_links, scores)),
+               columns =['target', 'weight'])
+        
+        df_wiki_org = df_wiki.sort_values(by=['weight'], ascending=False)
+        df_wiki_org = df_wiki_org.reset_index(drop=True)
+        
+        # if the page has already been searched, drop it from the current links
+        while df_wiki_org['target'][0] in pages:
+            df_wiki_org = df_wiki_org.drop(labels=0, axis=0)
+            df_wiki_org = df_wiki_org.reset_index(drop=True)
+
+        head = df_wiki_org['target'][0]
+        pages.append(head)
+        print(head)
+        steps = steps + 1
+
+    return steps
 
 def recursiveSearch(N, page_links, data):
     print('Search Depth Remaining: {}'.format(N))
@@ -55,7 +85,7 @@ def createWikiGraph(source, target):
                 'weight': scores}
 
     df_wiki = pd.DataFrame(list(zip( [source for i in range(len_target)], target, scores)),
-               columns =['source', 'source', 'weight'])
+               columns =['source', 'target', 'weight'])
     
     df_wiki_org = df_wiki.sort_values(by=['weight'], ascending=False)
 

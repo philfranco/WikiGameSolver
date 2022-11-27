@@ -10,7 +10,7 @@ def main():
     # Identify Starting Page
     print('Starting')
     start_article = 'Deer' # "Wilhelmy plate"
-    end_article = 'Field hockey' # "America's Cup"
+    end_article = 'Field Hockey' # "America's Cup"
 
     current_article = start_article
 
@@ -34,15 +34,18 @@ def main():
 def playWikiGame(head, final):
     steps = 0
     pages = [head]
-
-    while not head == final:
+    
+    # forces the words to be the same case
+    while not str.lower(head) == str.lower(final):
         result_links = getLinks(head)
         len_target = len(final)
         scores = wordScore(final, result_links)
-        
+
+        # create dataframe
         df_wiki = pd.DataFrame(list(zip(result_links, scores)),
                columns =['target', 'weight'])
         
+        # sort dataframe and reorganize index
         df_wiki_org = df_wiki.sort_values(by=['weight'], ascending=False)
         df_wiki_org = df_wiki_org.reset_index(drop=True)
         

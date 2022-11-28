@@ -4,12 +4,12 @@ from nltk.tokenize import word_tokenize
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
-from similarityCheck import wordScore
+# from similarityCheck import wordScore
 
 def main():
     # Identify Starting Page
     print('Starting')
-    start_article = 'Deer' # "Wilhelmy plate"
+    start_article = 'Cégep du Vieux Montréal' # "Wilhelmy plate"
     end_article = 'Field Hockey' # "America's Cup"
 
     current_article = start_article
@@ -17,8 +17,8 @@ def main():
     # page_text = getText(current_article, end_article)
     # page_links = getLinks(current_article)
     
-    steps = playWikiGame(start_article, end_article)
-    print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
+    # steps, pages_visited = playWikiGame(start_article, end_article)
+    # print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
 
     data = recursiveSearch(1, [start_article], {})
 
@@ -34,6 +34,7 @@ def main():
 def playWikiGame(head, final):
     steps = 0
     pages = [head]
+    pages_visited = []
     
     # forces the words to be the same case
     while not str.lower(head) == str.lower(final):
@@ -58,8 +59,9 @@ def playWikiGame(head, final):
         pages.append(head)
         print(head)
         steps = steps + 1
+        pages_visited.append(head)
 
-    return steps
+    return steps, pages_visited
 
 def recursiveSearch(N, page_links, data):
     print('Search Depth Remaining: {}'.format(N))
@@ -120,15 +122,53 @@ def getText(start_article, end_article):
 
     return text
 
-def getLinks(start_article):
+def getSections(start_article):
+    filter_sections = ['See_also',
+                       'References',
+                       'External_links']
+
+    section_titles = []
+
     url = 'https://en.wikipedia.org/w/api.php'
 
     params = {
-        'action': 'query',
+        'action': 'parse',
         'format': 'json',
-        'titles': start_article,
+        'page': start_article,
+        'prop': 'sections',
+        'redirects': ''
+    }
+
+    response = requests.get(url=url, params=params)
+    data = response.json()
+    sections = data['parse']['sections']
+    for val in sections:
+        section_titles.append(val['anchor'])
+
+    section_titles = [x for x in section_titles if x not in filter_sections]
+
+    return section_titles
+
+def getLinks(start_article):
+    section_titles = getSections(start_article)
+
+    url = 'https://en.wikipedia.org/w/api.php'
+
+    # params = {
+    #     'action': 'query',
+    #     'format': 'json',
+    #     'titles': start_article,
+    #     'prop': 'links',
+    #     'pllimit': 'max',
+    #     'redirects': ''
+    # }
+
+    params = {
+        'action': 'parse',
+        'format': 'json',
+        'page': start_article,
         'prop': 'links',
-        'pllimit': 'max',
+        'section' : '|'.join(section_titles),
         'redirects': ''
     }
 
@@ -138,7 +178,7 @@ def getLinks(start_article):
     pages = data['query']['pages']
     page = 1
     page_titles = []
-
+    import pdb; pdb.set_trace()
     for key, val in pages.items():
         if 'links' in val:
             for link in val['links']:

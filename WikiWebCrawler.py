@@ -4,12 +4,12 @@ from nltk.tokenize import word_tokenize
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
-# from similarityCheck import wordScore
+from similarityCheck import wordScore
 
 def main():
     # Identify Starting Page
     print('Starting')
-    start_article = 'Cégep du Vieux Montréal' # "Wilhelmy plate"
+    start_article = 'Deer' # "Wilhelmy plate"
     end_article = 'Field Hockey' # "America's Cup"
 
     current_article = start_article
@@ -17,8 +17,8 @@ def main():
     # page_text = getText(current_article, end_article)
     # page_links = getLinks(current_article)
     
-    # steps, pages_visited = playWikiGame(start_article, end_article)
-    # print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
+    steps, pages_visited = playWikiGame(start_article, end_article)
+    print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
 
     data = recursiveSearch(1, [start_article], {})
 
@@ -39,7 +39,7 @@ def playWikiGame(head, final):
     # forces the words to be the same case
     while not str.lower(head) == str.lower(final):
         result_links = getLinks(head)
-        len_target = len(final)
+        # len_target = len(final)
         scores = wordScore(final, result_links)
 
         # create dataframe
@@ -84,7 +84,8 @@ def recursiveSearch(N, page_links, data):
 
 def createWikiGraph(source, target):    
     len_target = len(target)
-    scores = wordScore(source, target)
+    # scores = wordScore(source, target)
+    scores = [1] * len_target
     wikiData = {'source': [source for i in range(len_target)],
                 'target': target,
                 'weight': scores}
@@ -125,9 +126,8 @@ def getText(start_article, end_article):
 def getSections(start_article):
     filter_sections = ['See_also',
                        'References',
-                       'External_links']
-
-    section_titles = []
+                       'External_links',
+                       'Further_reading']
 
     url = 'https://en.wikipedia.org/w/api.php'
 
@@ -141,63 +141,39 @@ def getSections(start_article):
 
     response = requests.get(url=url, params=params)
     data = response.json()
+
     sections = data['parse']['sections']
-    for val in sections:
-        section_titles.append(val['anchor'])
 
-    section_titles = [x for x in section_titles if x not in filter_sections]
+    # Remove sections in filter list
+    sections_filt = [x for x in sections if x['anchor'] not in filter_sections]
 
-    return section_titles
+    # Get section IDs
+    section_ids = [x['index'] for x in sections_filt]
+
+    return section_ids
 
 def getLinks(start_article):
-    section_titles = getSections(start_article)
-
+    page_titles = []
+    section_ids = getSections(start_article)
     url = 'https://en.wikipedia.org/w/api.php'
 
-    # params = {
-    #     'action': 'query',
-    #     'format': 'json',
-    #     'titles': start_article,
-    #     'prop': 'links',
-    #     'pllimit': 'max',
-    #     'redirects': ''
-    # }
-
-    params = {
-        'action': 'parse',
-        'format': 'json',
-        'page': start_article,
-        'prop': 'links',
-        'section' : '|'.join(section_titles),
-        'redirects': ''
-    }
-
-    response = requests.get(url=url, params=params)
-    data = response.json()
-
-    pages = data['query']['pages']
-    page = 1
-    page_titles = []
-    import pdb; pdb.set_trace()
-    for key, val in pages.items():
-        if 'links' in val:
-            for link in val['links']:
-                page_titles.append(link['title'])
-
-    while 'continue' in data:
-        plcontinue = data['continue']['plcontinue']
-        params['plcontinue'] = plcontinue
+    for idx in section_ids:
+        params = {
+            'action': 'parse',
+            'format': 'json',
+            'page': start_article,
+            'prop': 'links',
+            'section': int(idx) - 1,
+            'redirects': ''
+        }
 
         response = requests.get(url=url, params=params)
         data = response.json()
-        pages = data['query']['pages']
+        links = data['parse']['links']
 
-        page += 1
-
-        for key, val in pages.items():
-            for link in val['links']:
-                page_titles.append(link['title'])
-
+        # Remove results that are not in the 'main' namespace
+        # More info: https://www.mediawiki.org/wiki/Help:Namespaces
+        page_titles = page_titles + [x['*'] for x in links if x['ns'] == 0]
 
     print('# Links: {}'.format(len(page_titles[:])))
     return page_titles

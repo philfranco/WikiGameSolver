@@ -1,8 +1,11 @@
 from sentence_transformers import SentenceTransformer, util
+from nltk import sent_tokenize
 import numpy as np
 
 def coding_test():
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+    #model = SentenceTransformer('all-MiniLM-L6-v2')
+    model = SentenceTransformer('bert-base-nli-mean-tokens')
+  
   # Two lists of sentences
     sentences1 = ['dog',
                 'cat',
@@ -25,8 +28,12 @@ def coding_test():
     for i in range(len(sentences1)):
         print("{} \t\t {} \t\t Score: {:.4f}".format(sentences1[i], sentences2[i], cosine_scores[i][i]))
 
-def wordScore(word1, word2):
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+def wordScore(word1, word2, model):
+    if model == 'bert':
+      model = SentenceTransformer('bert-base-nli-mean-tokens')
+    else:
+      model = SentenceTransformer('all-MiniLM-L6-v2')
+
     cosine_scores = []
 
     # Make word 1 to be an equal length to word 2

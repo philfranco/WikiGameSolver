@@ -9,8 +9,8 @@ from similarityCheck import wordScore
 def main():
     # Identify Starting Page
     print('Starting')
-    start_article = 'Deer' # "Wilhelmy plate"
-    end_article = 'Field Hockey' # "America's Cup"
+    start_article = 'dog' # "Wilhelmy plate"
+    end_article = 'New Jersey' # "America's Cup"
 
     current_article = start_article
 
@@ -39,7 +39,7 @@ def playWikiGame(head, final):
     while not str.lower(head) == str.lower(final):
         result_links = getLinks(head)
         len_target = len(final)
-        scores = wordScore(final, result_links)
+        scores = wordScore(final, result_links, '')
 
         # create dataframe
         df_wiki = pd.DataFrame(list(zip(result_links, scores)),

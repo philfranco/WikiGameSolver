@@ -4,7 +4,7 @@ from nltk.tokenize import word_tokenize
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
-from similarityCheck import wordScore
+# from similarityCheck import wordScore
 
 def main():
     # Identify Starting Page
@@ -17,10 +17,10 @@ def main():
     # page_text = getText(current_article, end_article)
     # page_links = getLinks(current_article)
     
-    steps, pages_visited = playWikiGame(start_article, end_article)
-    print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
+    # steps, pages_visited = playWikiGame(start_article, end_article)
+    # print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
 
-    data = recursiveSearch(1, [start_article], {})
+    data = recursiveSearch(1, [start_article], {}, end_article)
 
     # Create Network Graph
     df = pd.DataFrame(data)
@@ -30,6 +30,59 @@ def main():
     nx.draw_networkx(G)
 
     plt.show()
+
+def getLinksFromTextBS(start_article, end_article):
+    url = 'https://en.wikipedia.org/w/api.php'
+    params = {
+        'action': 'parse',
+        'page': start_article,
+        'format': 'json',
+        'prop': 'text',
+        'redirects': ''
+    }
+
+    filter_sections = ['See also',
+                       'References',
+                       'External links',
+                       'Further reading',
+                       'Notes']
+
+    response = requests.get(url, params=params)
+    data = response.json()
+
+    raw_html = data['parse']['text']['*']
+    soup = BeautifulSoup(raw_html, 'html.parser')
+
+    # Get all the section names
+    allSections = soup.find_all(class_='mw-headline')
+
+    sectionNames = []
+    for section in allSections:
+        sectionNames.append(section.get_text())
+
+    sectionNames = [x for x in sectionNames if x not in filter_sections]
+
+    # Get links from summary section
+
+    # Get all the links from each of the relevant sections
+    for thisSection in sectionNames:
+        print('==--------' + thisSection + '--------==')
+        target = soup.find(class_='mw-headline', id=thisSection.replace(' ', '_'))
+        for sib in target.find_all_next():
+            # Only look in current section, end if hitting next section
+            # print(sib)
+            if sib.name == "h2":
+                break
+            else:
+                # Check if href contains internal /wiki/ path
+                check1 = 'href' in sib.attrs and \
+                '/wiki/' in sib.attrs['href']
+                # Check if tag contains class mw-redirect
+                check2 = 'class' in sib.attrs and \
+                    'mw-redirect' in sib.attrs['class']
+                if (check1 or check2) and 'title' in sib.attrs:
+                    print(sib.attrs['title'])
+
 
 def playWikiGame(head, final):
     steps = 0
@@ -63,7 +116,7 @@ def playWikiGame(head, final):
 
     return steps, pages_visited
 
-def recursiveSearch(N, page_links, data):
+def recursiveSearch(N, page_links, data, end_article):
     print('Search Depth Remaining: {}'.format(N))
     new_data = {}
     new_links = []
@@ -74,13 +127,14 @@ def recursiveSearch(N, page_links, data):
         wiki_data = createWikiGraph(link, result_links)
         new_data.update(wiki_data)
         new_links = new_links + result_links
+        if end_article in new_links:
+            break
 
     new_data.update(data)
-
     if N == 0:
         return new_data
     else:
-        return recursiveSearch(N - 1, new_links, new_data)
+        return recursiveSearch(N - 1, new_links, new_data, end_article)
 
 def createWikiGraph(source, target):    
     len_target = len(target)

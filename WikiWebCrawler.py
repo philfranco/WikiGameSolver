@@ -9,6 +9,7 @@ from similarityCheck import wordScore
 def main():
     # Identify Starting Page
     print('Starting')
+
     start_article = 'Fox' # "Wilhelmy plate"
     end_article = 'Middle Ages' # "America's Cup"
 
@@ -123,9 +124,9 @@ def playWikiGame(head, final):
     # forces the words to be the same case
     while not str.lower(head) == str.lower(final):
         result_links = getLinks(head)
-        # len_target = len(final)
-        scores = wordScore(final, result_links)
-
+        len_target = len(final)
+        scores = wordScore(final, result_links, '')
+        
         # create dataframe
         df_wiki = pd.DataFrame(list(zip(result_links, scores)),
                columns =['target', 'weight'])

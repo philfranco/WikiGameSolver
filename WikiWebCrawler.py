@@ -4,7 +4,7 @@ from nltk.tokenize import word_tokenize
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
-# from similarityCheck import wordScore
+from similarityCheck import wordScore
 
 def main():
     # Identify Starting Page
@@ -17,8 +17,8 @@ def main():
     # page_text = getText(current_article, end_article)
     # page_links = getLinks(current_article)
     
-    # steps, pages_visited = playWikiGame(start_article, end_article)
-    # print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
+    steps, pages_visited = playWikiGame(start_article, end_article)
+    print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
 
     data = recursiveSearch(3, [start_article], {'source': [], 'target': [], 'weight': []}, end_article)
 
@@ -180,8 +180,8 @@ def recursiveSearch(N, page_links, data, end_article):
 
 def createWikiGraph(source, target):    
     len_target = len(target)
-    # scores = wordScore(source, target)
-    scores = [1] * len_target
+    scores = wordScore(source, target)
+    # scores = [1] * len_target
     wikiData = {'source': [source for i in range(len_target)],
                 'target': target,
                 'weight': scores}

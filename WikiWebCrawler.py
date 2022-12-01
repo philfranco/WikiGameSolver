@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 def main():
     # Identify Starting Page
     print('Starting')
-    start_article = 'Deer' # "Wilhelmy plate"
-    end_article = 'Field Hockey' # "America's Cup"
+    start_article = 'Fox' # "Wilhelmy plate"
+    end_article = 'Middle Ages' # "America's Cup"
 
     current_article = start_article
 
@@ -20,18 +20,47 @@ def main():
     # steps, pages_visited = playWikiGame(start_article, end_article)
     # print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
 
-    data = recursiveSearch(1, [start_article], {}, end_article)
+    data = recursiveSearch(3, [start_article], {'source': [], 'target': [], 'weight': []}, end_article)
 
     # Create Network Graph
     df = pd.DataFrame(data)
+    shortest_path = buildNetwork(df, start_article, end_article)
 
+
+def buildNetwork(df, start_article, end_article):
     G = nx.from_pandas_edgelist(df, source='source', target='target')
 
-    nx.draw_networkx(G)
+    color_map = []
+    size_map = []
 
+    # Shortest path between start and end article
+    p = nx.shortest_path(G, source=start_article, target=end_article, method='dijkstra')
+    print(p)
+
+    # Format network plot
+    for node in G:
+        if node in start_article:
+            color_map.append('green')
+            size_map.append(100)
+        elif node in end_article:
+            color_map.append('red')
+            size_map.append(100)
+        elif node in p:
+            color_map.append('blue')
+            size_map.append(100)
+        else:
+            color_map.append('beige')
+            size_map.append(1)
+
+    nx.draw_spring(G, with_labels=False, node_color=color_map, node_size=size_map)
     plt.show()
 
-def getLinksFromTextBS(start_article, end_article):
+    # nx.draw_spectral(G, with_labels=False, node_color=color_map, node_size=size_map)
+    # plt.show()
+    return p
+
+def getLinksFromTextBS(start_article):
+    page_titles = []
     url = 'https://en.wikipedia.org/w/api.php'
     params = {
         'action': 'parse',
@@ -50,6 +79,7 @@ def getLinksFromTextBS(start_article, end_article):
     response = requests.get(url, params=params)
     data = response.json()
 
+
     raw_html = data['parse']['text']['*']
     soup = BeautifulSoup(raw_html, 'html.parser')
 
@@ -66,23 +96,24 @@ def getLinksFromTextBS(start_article, end_article):
 
     # Get all the links from each of the relevant sections
     for thisSection in sectionNames:
-        print('==--------' + thisSection + '--------==')
+        # print('==--------' + thisSection + '--------==')
         target = soup.find(class_='mw-headline', id=thisSection.replace(' ', '_'))
-        for sib in target.find_all_next():
-            # Only look in current section, end if hitting next section
-            # print(sib)
-            if sib.name == "h2":
-                break
-            else:
-                # Check if href contains internal /wiki/ path
-                check1 = 'href' in sib.attrs and \
-                '/wiki/' in sib.attrs['href']
-                # Check if tag contains class mw-redirect
-                check2 = 'class' in sib.attrs and \
-                    'mw-redirect' in sib.attrs['class']
-                if (check1 or check2) and 'title' in sib.attrs:
-                    print(sib.attrs['title'])
-
+        if target:
+            for sib in target.find_all_next():
+                # Only look in current section, end if hitting next section
+                # print(sib)
+                if sib.name == "h2":
+                    break
+                else:
+                    # Check if href contains internal /wiki/ path
+                    check1 = 'href' in sib.attrs and \
+                    '/wiki/' in sib.attrs['href']
+                    # Check if tag contains class mw-redirect
+                    check2 = 'class' in sib.attrs and \
+                        'mw-redirect' in sib.attrs['class']
+                    if (check1 or check2) and 'title' in sib.attrs:
+                        page_titles.append(sib.attrs['title'])
+    return page_titles
 
 def playWikiGame(head, final):
     steps = 0
@@ -118,19 +149,30 @@ def playWikiGame(head, final):
 
 def recursiveSearch(N, page_links, data, end_article):
     print('Search Depth Remaining: {}'.format(N))
-    new_data = {}
+    new_data = {'source': [], 'target': [], 'weight': []}
     new_links = []
 
     for link in page_links:
-        print(link)
-        result_links = getLinks(link)
+        # result_links = getLinks(link)
+        result_links = getLinksFromTextBS(link)
+        # Save result links into dictionary
         wiki_data = createWikiGraph(link, result_links)
-        new_data.update(wiki_data)
+        new_data['source'].extend(wiki_data['source'])
+        new_data['target'].extend(wiki_data['target'])
+        new_data['weight'].extend(wiki_data['weight'])
+
         new_links = new_links + result_links
         if end_article in new_links:
+            print('======================')
+            print('FOUND: ' + end_article)
+            print('======================')
+            N = 0
             break
 
-    new_data.update(data)
+    new_data['source'].extend(data['source'])
+    new_data['target'].extend(data['target'])
+    new_data['weight'].extend(data['weight'])
+
     if N == 0:
         return new_data
     else:

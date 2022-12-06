@@ -100,7 +100,6 @@ def getLinksFromTextBS(start_article):
             # Only look in current section, end if hitting next section
             # print(sib)
             if sib.name == "h2":
-                import pdb; pdb.set_trace()
                 break
             elif 'title' in sib.attrs and 'Edit this' in sib.attrs['title']:
                 # Don't include the hrefs to edit the pages
@@ -134,7 +133,7 @@ def getLinksFromTextBS(start_article):
                         'mw-redirect' in sib.attrs['class']
                     if (check1 or check2) and 'title' in sib.attrs:
                         page_titles.append(sib.attrs['title'])
-    import pdb; pdb.set_trace()
+    # Unique pages only
     page_titles = list(set(page_titles))
     return page_titles
 

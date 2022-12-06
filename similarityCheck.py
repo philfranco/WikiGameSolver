@@ -5,8 +5,8 @@ import numpy as np
 def coding_test():
     #model = SentenceTransformer('all-MiniLM-L6-v2')
     model = SentenceTransformer('bert-base-nli-mean-tokens')
-  
-  # Two lists of sentences
+
+    # Two lists of sentences
     sentences1 = ['dog',
                 'cat',
                 'cat',
@@ -31,7 +31,13 @@ def coding_test():
 def wordScore(word1, word2, model):
     if model == 'bert':
       model = SentenceTransformer('bert-base-nli-mean-tokens')
-    else:
+    elif model == 'roberta':
+      model = SentenceTransformer('all-distilroberta-v1')
+    elif model == 'microsoftNet':
+      model = SentenceTransformer('all-mpnet-base-v2')
+    elif model == 'L12':
+      model = SentenceTransformer('all-MiniLM-L12-v2')
+    elif model == 'L6':
       model = SentenceTransformer('all-MiniLM-L6-v2')
 
     cosine_scores = []

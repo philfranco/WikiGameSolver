@@ -4,7 +4,7 @@ from nltk.tokenize import word_tokenize
 import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
-from similarityCheck import wordScore
+from similarityCheck import wordScore, coding_test
 import time
 
 def main():
@@ -324,5 +324,5 @@ def getLinks(start_article):
     return page_titles
 
 if __name__ == "__main__":
-    a = getLinksFromTextBS('Consequent')
+    #coding_test()
     main()

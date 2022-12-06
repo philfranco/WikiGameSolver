@@ -11,8 +11,8 @@ def main():
     # Identify Starting Page
     print('Starting')
 
-    start_article = 'Fox' # "Wilhelmy plate"
-    end_article = 'Middle Ages' # "America's Cup"
+    start_article = 'Amazon River' # "Wilhelmy plate"
+    end_article = 'Emotion' # "America's Cup"
 
     current_article = start_article
 
@@ -129,7 +129,7 @@ def getLinksFromTextBS(start_article):
                 # Check if tag contains class mw-redirect
                 check2 = 'class' in sib.attrs and \
                          'mw-redirect' in sib.attrs['class']
-                if (check1 or check2) and 'title' in sib.attrs:
+                if (check1 or check2) and 'title' in sib.attrs and ':' not in sib.attrs['title']:
                     page_titles.append(sib.attrs['title'])
 
     # Get all the links from each of the relevant sections

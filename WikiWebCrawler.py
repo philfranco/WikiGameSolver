@@ -5,6 +5,7 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 from similarityCheck import wordScore
+import time
 
 def main():
     # Identify Starting Page
@@ -18,15 +19,32 @@ def main():
     # page_text = getText(current_article, end_article)
     # page_links = getLinks(current_article)
     
-    steps, pages_visited = playWikiGame(start_article, end_article)
-    print("It took " + str(steps) + " links to get from " + start_article + " to " + end_article)
+    steps_l6, pages_visited_l6, time_l6 = playWikiGame(start_article, end_article, 'L6')
+    print("L6: It took " + str(steps_l6) + " links to get from " + start_article + " to " + end_article)
+ 
+    steps_l12, pages_visited_l12, time_l12 = playWikiGame(start_article, end_article, 'L12')
+    print("L12: It took " + str(steps_l12) + " links to get from " + start_article + " to " + end_article)
+
+    steps_micro, pages_visited_micro, time_micro = playWikiGame(start_article, end_article, 'microsoftNet')
+    print("Microsoft: It took " + str(steps_micro) + " links to get from " + start_article + " to " + end_article)
+
+    steps_bert, pages_visited_bert, time_bert = playWikiGame(start_article, end_article, 'bert')
+    print("Bert: It took " + str(steps_bert) + " links to get from " + start_article + " to " + end_article)
+
+    steps_roberta, pages_visited, time_roberta = playWikiGame(start_article, end_article, 'roberta')
+    print("Roberta: It took " + str(steps_roberta) + " links to get from " + start_article + " to " + end_article)
+   
+    print("L6:        It took " + str(steps_l6) + " links to get from " + start_article + " to " + end_article +  " in " + time_l6)
+    print("L12:       It took " + str(steps_l12) + " links to get from " + start_article + " to " + end_article +  " in " + time_l12)
+    print("Microsoft: It took " + str(steps_micro) + " links to get from " + start_article + " to " + end_article +  " in " + time_micro)
+    print("Bert:      It took " + str(steps_bert) + " links to get from " + start_article + " to " + end_article +  " in " + time_bert)
+    print("Roberta:   It took " + str(steps_roberta) + " links to get from " + start_article + " to " + end_article +  " in " + time_roberta)
 
     data = recursiveSearch(3, [start_article], {'source': [], 'target': [], 'weight': []}, end_article)
 
     # Create Network Graph
     df = pd.DataFrame(data)
     shortest_path = buildNetwork(df, start_article, end_article)
-
 
 def buildNetwork(df, start_article, end_article):
     G = nx.from_pandas_edgelist(df, source='source', target='target')
@@ -137,17 +155,20 @@ def getLinksFromTextBS(start_article):
     page_titles = list(set(page_titles))
     return page_titles
 
-def playWikiGame(head, final):
+def playWikiGame(head, final, model):
     steps = 0
     pages = [head]
     pages_visited = []
+
+    tic = time.perf_counter()
     
     # forces the words to be the same case
     while not str.lower(head) == str.lower(final):
         result_links = getLinksFromTextBS(head)
         len_target = len(final)
-        scores = wordScore(final, result_links, '')
-        
+
+        scores = wordScore(final, result_links, model)
+
         # create dataframe
         df_wiki = pd.DataFrame(list(zip(result_links, scores)),
                columns =['target', 'weight'])
@@ -166,8 +187,11 @@ def playWikiGame(head, final):
         print(head)
         steps = steps + 1
         pages_visited.append(head)
+    
+    toc = time.perf_counter()
 
-    return steps, pages_visited
+    print(model + " took " + str(toc - tic) + " seconds to complete")
+    return steps, pages_visited, str(toc - tic)
 
 def recursiveSearch(N, page_links, data, end_article):
     print('Search Depth Remaining: {}'.format(N))
@@ -202,7 +226,10 @@ def recursiveSearch(N, page_links, data, end_article):
 
 def createWikiGraph(source, target):    
     len_target = len(target)
-    scores = wordScore(source, target)
+
+    # NOT SURE WHAT MODEL TO USE
+    scores = wordScore(source, target, "L6")
+
     # scores = [1] * len_target
     wikiData = {'source': [source for i in range(len_target)],
                 'target': target,

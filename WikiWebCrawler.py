@@ -111,7 +111,26 @@ def getLinksFromTextBS(start_article):
 
     sectionNames = [x for x in sectionNames if x not in filter_sections]
 
-    # Get links from summary section
+    # Get links from summary section up to the Table of Contents
+    target = soup.find(class_='mw-parser-output')
+    if target:
+        for sib in target.find_all_next():
+            # Only look in current section, end if hitting next section
+            # print(sib)
+            if sib.name == "h2":
+                break
+            elif 'title' in sib.attrs and 'Edit this' in sib.attrs['title']:
+                # Don't include the hrefs to edit the pages
+                continue
+            else:
+                # Check if href contains internal /wiki/ path
+                check1 = 'href' in sib.attrs and \
+                         '/wiki/' in sib.attrs['href']
+                # Check if tag contains class mw-redirect
+                check2 = 'class' in sib.attrs and \
+                         'mw-redirect' in sib.attrs['class']
+                if (check1 or check2) and 'title' in sib.attrs:
+                    page_titles.append(sib.attrs['title'])
 
     # Get all the links from each of the relevant sections
     for thisSection in sectionNames:
@@ -132,6 +151,8 @@ def getLinksFromTextBS(start_article):
                         'mw-redirect' in sib.attrs['class']
                     if (check1 or check2) and 'title' in sib.attrs:
                         page_titles.append(sib.attrs['title'])
+    # Unique pages only
+    page_titles = list(set(page_titles))
     return page_titles
 
 def playWikiGame(head, final, model):
@@ -143,7 +164,7 @@ def playWikiGame(head, final, model):
     
     # forces the words to be the same case
     while not str.lower(head) == str.lower(final):
-        result_links = getLinks(head)
+        result_links = getLinksFromTextBS(head)
         len_target = len(final)
 
         scores = wordScore(final, result_links, model)
